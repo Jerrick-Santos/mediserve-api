@@ -46,7 +46,7 @@ module.exports = (db) => {
             }
 
             // If the user is a pharmacist, retrieve the pharmacy_ID
-            if (user.user_type === 'pharmacist') {
+            if (user.type === 'pharmacist') {
                 const pharmacistQuery = 'SELECT pharmacy_ID FROM MD_pharmacist WHERE user_ID = ?';
                 db.query(pharmacistQuery, [user.user_ID], (err, pharmacistResults) => {
                     if (err) {
