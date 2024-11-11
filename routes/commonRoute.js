@@ -17,81 +17,68 @@ module.exports = (db) => {
         });
     });
 
+    router.get('/login', (req, res) => {
+        const { username, password } = req.body;
 
-const express = require('express');
-const router = express.Router();
-const mysql = require('mysql'); // Assuming MySQL is used; adjust if you're using a different DB
-
-// Set up your database connection
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'your_database_password',
-    database: 'mobdeve_schema'
-});
-
-router.get('/login', (req, res) => {
-    const { username, password } = req.body;
-
-    // Validate input
-    if (!username || !password) {
-        return res.status(400).json({ message: 'Username and password are required.' });
-    }
-
-    // Query the MD_user table to find the user
-    const query = 'SELECT * FROM MD_user WHERE username = ?';
-    db.query(query, [username], (err, results) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ message: 'Database error.' });
+        // Validate input
+        if (!username || !password) {
+            return res.status(400).json({ message: 'Username and password are required.' });
         }
 
-        // Check if user exists
-        if (results.length === 0) {
-            return res.status(401).json({ message: 'Invalid username or password.' });
-        }
+        // Query the MD_user table to find the user
+        const query = 'SELECT * FROM MD_user WHERE username = ?';
+        db.query(query, [username], (err, results) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ message: 'Database error.' });
+            }
 
-        const user = results[0];
+            // Check if user exists
+            if (results.length === 0) {
+                return res.status(401).json({ message: 'Invalid username or password.' });
+            }
 
-        // Check if the password matches
-        if (user.password !== password) {
-            return res.status(401).json({ message: 'Invalid username or password.' });
-        }
+            const user = results[0];
 
-        // If the user is a pharmacist, retrieve the pharmacy_ID
-        if (user.user_type === 'pharmacist') {
-            const pharmacistQuery = 'SELECT pharmacy_ID FROM MD_pharmacist WHERE user_ID = ?';
-            db.query(pharmacistQuery, [user.user_ID], (err, pharmacistResults) => {
-                if (err) {
-                    console.error(err);
-                    return res.status(500).json({ message: 'Database error.' });
-                }
+            // Check if the password matches
+            if (user.password !== password) {
+                return res.status(401).json({ message: 'Invalid username or password.' });
+            }
 
-                // Check if pharmacist data exists
-                if (pharmacistResults.length === 0) {
-                    return res.status(404).json({ message: 'Pharmacist data not found.' });
-                }
+            // If the user is a pharmacist, retrieve the pharmacy_ID
+            if (user.user_type === 'pharmacist') {
+                const pharmacistQuery = 'SELECT pharmacy_ID FROM MD_pharmacist WHERE user_ID = ?';
+                db.query(pharmacistQuery, [user.user_ID], (err, pharmacistResults) => {
+                    if (err) {
+                        console.error(err);
+                        return res.status(500).json({ message: 'Database error.' });
+                    }
 
-                const pharmacy_ID = pharmacistResults[0].pharmacy_ID;
+                    // Check if pharmacist data exists
+                    if (pharmacistResults.length === 0) {
+                        return res.status(404).json({ message: 'Pharmacist data not found.' });
+                    }
 
-                // Return success message with pharmacy_ID
+                    const pharmacy_ID = pharmacistResults[0].pharmacy_ID;
+
+                    // Return success message with pharmacy_ID
+                    return res.status(200).json({
+                        message: 'Login successful',
+                        userId: user.user_ID,
+                        userType: user.user_type,
+                        pharmacy_ID: pharmacy_ID
+                    });
+                });
+            } else {
+                // If user is not a pharmacist, return a success response without pharmacy_ID
                 return res.status(200).json({
                     message: 'Login successful',
                     userId: user.user_ID,
-                    userType: user.user_type,
-                    pharmacy_ID: pharmacy_ID
+                    userType: user.user_type
                 });
-            });
-        } else {
-            // If user is not a pharmacist, return a success response without pharmacy_ID
-            return res.status(200).json({
-                message: 'Login successful',
-                userId: user.user_ID,
-                userType: user.user_type
-            });
-        }
+            }
+        });
     });
-});
 
 module.exports = router;
 
