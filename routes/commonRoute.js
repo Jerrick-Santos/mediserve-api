@@ -18,7 +18,7 @@ module.exports = (db) => {
     });
 
     router.get('/login', (req, res) => {
-        const { username, password } = req.body;
+        const { username, password } = req.query;
 
         // Validate input
         if (!username || !password) {
