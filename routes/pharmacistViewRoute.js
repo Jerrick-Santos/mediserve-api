@@ -4,7 +4,7 @@ const router = express.Router();
 module.exports = (db) => {
     router.get('/prodcatalogue', (req, res) => {
         const { pharmacyID } = req.query;
-        const dbquery = `SELECT t1.product_ID AS id, t2.name AS brandName, t5.name AS genericName, t4.name AS manufacturer, CONCAT(t1.dosage, " ", t3.name) AS dosage
+        const dbquery = `SELECT CONCAT("PRDCT", t1.product_ID) AS id, t2.name AS brandName, t5.name AS genericName, t4.name AS manufacturer, CONCAT(t1.dosage, " ", t3.name) AS dosage
                 FROM mobdeve_schema.CMD_product_catalogue t1
                 JOIN CMD_brand t2 ON t1.brand_ID = t2.brand_ID
                 JOIN REF_unit t3 ON t1.unit_ID = t3.unit_ID
