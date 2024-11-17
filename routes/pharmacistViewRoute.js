@@ -20,7 +20,7 @@ module.exports = (db) => {
                 console.log("Catalogue Not Found.");
                 res.status(404).json({ message: "Catalogue Not Found" });
             } else {
-                res.status(200).json({ results });
+                res.status(200).json(results);
             }
         });
     });
