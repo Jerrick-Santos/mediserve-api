@@ -18,7 +18,7 @@ module.exports = (db) => {
     });
 
     router.get('/login', (req, res) => {
-        const { username, password } = req.body;
+        const { username, password } = req.query;
 
         // Validate input
         if (!username || !password) {
@@ -65,7 +65,8 @@ module.exports = (db) => {
                     return res.status(200).json({
                         message: 'Login successful',
                         userId: user.user_ID,
-                        userType: user.user_type,
+                        username: user.username,
+                        userType: user.type,
                         pharmacy_ID: pharmacy_ID
                     });
                 });
@@ -73,8 +74,9 @@ module.exports = (db) => {
                 // If user is not a pharmacist, return a success response without pharmacy_ID
                 return res.status(200).json({
                     message: 'Login successful',
+                    username: user.username,
                     userId: user.user_ID,
-                    userType: user.user_type
+                    userType: user.type
                 });
             }
         });
