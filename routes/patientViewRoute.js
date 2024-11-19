@@ -54,9 +54,10 @@ module.exports = (db) => {
 
     router.get('/profile/:id', (req, res) => {
         const patientID = req.params.id; // Access the patientID from the URL parameter
-        const dbquery = `SELECT     height, weight, bp, bmi, other_info, user_ID
-                            FROM    mobdeve_schema.MD_patient
-                            WHERE   patient_ID = ?`;
+        const dbquery = `SELECT     	u.first_name, u.last_name, p.birthdate, p.gender, p.address, p.height, p.weight, p.bp, p.bmi, p.other_info, p.contact_num, p.email
+                            FROM    	mobdeve_schema.MD_patient p
+                            JOIN		mobdeve_schema.MD_user u ON u.user_ID = p.user_ID
+                            WHERE  	 	patient_ID = ?`;
 
         db.query(dbquery, [patientID], (err, results) => {
             if (err) {
