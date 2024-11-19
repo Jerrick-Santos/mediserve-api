@@ -52,5 +52,26 @@ module.exports = (db) => {
         });
     });
 
+    router.get('/transactions', (req, res) => {
+        const { pharmacyID } = req.query;
+        const dbquery = `SELECT CONCAT("TRANSAC", t1.transac_id) AS transac_id, t3.name AS product_name, t1.change_type, t1.qty
+        FROM mobdeve_schema.TD_stock_transactions t1
+        JOIN mobdeve_schema.TD_stocks t2 ON t1.stock_ID = t2.stock_ID
+        JOIN mobdeve_schema.CMD_brand t3 ON t3.brand_ID = t2.stock_ID
+        WHERE t2.pharmacy_ID = ?;`
+        db.query(dbquery, [pharmacyID], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Transactions Not Found.");
+                res.status(404).json({ message: "Transactions Not Found" });
+            } else {
+                res.status(200).json(results);
+            }
+        });
+    });
+    
+
     return router;
 }
