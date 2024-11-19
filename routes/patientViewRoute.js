@@ -71,5 +71,31 @@ module.exports = (db) => {
         })
     })
 
+    router.post('/reminders', (req, res) => {
+        const { start_date, end_date, time, presc_item_id } = req.body;
+
+        if (!start_date || !end_date || !time || !presc_item_id) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const dbquery = `
+            INSERT INTO mobdeve_schema.TD_reminders 
+            (start_date, end_date, time, presc_item_id) 
+            VALUES (?, ?, ?, ?)
+        `;
+
+        db.query(dbquery, [start_date, end_date, time, presc_item_id], (err, results) => {
+            if (err) {
+                console.error("Database insertion error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else {
+                res.status(201).json({ 
+                    message: "Reminder added successfully", 
+                    reminder_id: results.insertId 
+                });
+            }
+        });
+    });
+
     return router;
 }
