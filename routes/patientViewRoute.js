@@ -52,5 +52,24 @@ module.exports = (db) => {
         });
     });
 
+    router.get('/profile/:id', (req, res) => {
+        const patientID = req.params.id; // Access the patientID from the URL parameter
+        const dbquery = `SELECT     height, weight, bp, bmi, other_info, user_ID
+                            FROM    mobdeve_schema.MD_patient
+                            WHERE   patient_ID = ?`;
+
+        db.query(dbquery, [patientID], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Patient Profile Not Found.");
+                res.status(404).json({ message: "Patient Profile Not Found" });
+            } else {
+                res.status(200).json(results);
+            }
+        })
+    })
+
     return router;
 }
