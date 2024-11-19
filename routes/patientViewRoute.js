@@ -97,5 +97,26 @@ module.exports = (db) => {
         });
     });
 
+    router.delete('/reminders/:reminderId', (req, res) => {
+        const reminderId = req.params.reminderId; // Access the reminder ID from the URL parameter
+
+        if (!reminderId) {
+            return res.status(400).json({ error: "Missing reminder ID" });
+        }
+
+        const dbquery = `DELETE FROM mobdeve_schema.TD_reminders WHERE reminder_id = ?`;
+
+        db.query(dbquery, [reminderId], (err, results) => {
+            if (err) {
+                console.error("Database deletion error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.affectedRows === 0) {
+                res.status(404).json({ message: "Reminder not found" });
+            } else {
+                res.status(200).json({ message: "Reminder deleted successfully" });
+            }
+        });
+    });
+
     return router;
 }
