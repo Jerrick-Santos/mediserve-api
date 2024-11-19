@@ -118,5 +118,45 @@ module.exports = (db) => {
         });
     });
 
+    router.post('/patients', (req, res) => {
+        const { first_name, last_name, username, password, height, weight, bp, bmi, other_info } = req.body;
+
+        if (!first_name || !last_name || !username || !password || !height || !weight || !bp || !bmi) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const userQuery = `
+            INSERT INTO mobdeve_schema.MD_user (first_name, last_name, username, password, type) 
+            VALUES (?, ?, ?, ?, 'patient')
+        `;
+
+        db.query(userQuery, [first_name, last_name, username, password], (err, userResult) => {
+            if (err) {
+                console.error("Error inserting user:", err);
+                return res.status(500).json({ error: "Internal Server Error" });
+            }
+
+            const userId = userResult.insertId;
+
+            const patientQuery = `
+                INSERT INTO mobdeve_schema.MD_patient (height, weight, bp, bmi, other_info, user_ID)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
+
+            db.query(patientQuery, [height, weight, bp, bmi, other_info, userId], (err, patientResult) => {
+                if (err) {
+                    console.error("Error inserting patient:", err);
+                    return res.status(500).json({ error: "Internal Server Error" });
+                }
+
+                res.status(201).json({ 
+                    message: "Patient and user added successfully", 
+                    patient_id: patientResult.insertId,
+                    user_id: userId
+                });
+            });
+        });
+    });
+
     return router;
 }
