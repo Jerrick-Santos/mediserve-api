@@ -119,9 +119,9 @@ module.exports = (db) => {
     });
 
     router.post('/patients', (req, res) => {
-        const { first_name, last_name, username, password, height, weight, bp, bmi, other_info } = req.body;
+        const { first_name, last_name, username, password, height, weight, bp, bmi, other_info, email, contact_num } = req.body;
 
-        if (!first_name || !last_name || !username || !password || !height || !weight || !bp || !bmi) {
+        if (!first_name || !last_name || !username || !password || !height || !weight || !bp || !bmi || !email || !contact_num) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
@@ -139,11 +139,11 @@ module.exports = (db) => {
             const userId = userResult.insertId;
 
             const patientQuery = `
-                INSERT INTO mobdeve_schema.MD_patient (height, weight, bp, bmi, other_info, user_ID)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO mobdeve_schema.MD_patient (height, weight, bp, bmi, other_info, contact_num, email, user_ID)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
-            db.query(patientQuery, [height, weight, bp, bmi, other_info, userId], (err, patientResult) => {
+            db.query(patientQuery, [height, weight, bp, bmi, other_info, contact_num, email, userId], (err, patientResult) => {
                 if (err) {
                     console.error("Error inserting patient:", err);
                     return res.status(500).json({ error: "Internal Server Error" });
