@@ -158,5 +158,41 @@ module.exports = (db) => {
         });
     });
 
+    router.post('/patientlogin', (req, res) => {
+        const { username, password } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({ error: "Username and password are required" });
+        }
+
+        const query = `
+            SELECT u.user_ID, p.patient_ID, u.password
+            FROM mobdeve_schema.MD_user u
+            JOIN mobdeve_schema.MD_patient p ON u.user_ID = p.user_ID
+            WHERE u.username = ? AND u.type = 'patient'
+        `;
+
+        db.query(query, [username], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                return res.status(500).json({ error: "Internal Server Error" });
+            }
+
+            if (results.length === 0) {
+                return res.status(404).json({ message: "Invalid username or password" });
+            }
+
+            const user = results[0];
+
+            // Direct comparison of passwords (if stored in plain text)
+            if (password === user.password) {
+                res.status(200).json({ patient_id: user.patient_ID });
+            } else {
+                res.status(401).json({ message: "Invalid username or password" });
+            }
+        });
+    });
+
+
     return router;
 }
