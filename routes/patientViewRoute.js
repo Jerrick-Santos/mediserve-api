@@ -139,8 +139,8 @@ module.exports = (db) => {
             const userId = userResult.insertId;
 
             const patientQuery = `
-                INSERT INTO mobdeve_schema.MD_patient (height, weight, bp, bmi, other_info, contact_num, email, user_ID)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO mobdeve_schema.MD_patient (birthdate, gender, address, height, weight, bp, bmi, other_info, contact_num, email, user_ID)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
             db.query(patientQuery, [height, weight, bp, bmi, other_info, contact_num, email, userId], (err, patientResult) => {
