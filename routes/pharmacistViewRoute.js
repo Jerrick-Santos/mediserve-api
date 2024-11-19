@@ -28,7 +28,7 @@ module.exports = (db) => {
 
     router.get('/inventory', (req, res) => {
         const { pharmacyID } = req.query;
-        const dbquery = `SELECT CONCAT("PRDCT", agg_tb2.id) AS id, agg_tb2.brandName, agg_tb2.genericName, agg_tb2.manufacturer, agg_tb2.dosage, mtble.current_amt AS qty
+        const dbquery = `SELECT CONCAT("PRDCT", agg_tb2.id) AS product_id, mtble.stock_ID AS stock_id, agg_tb2.brandName, agg_tb2.genericName, agg_tb2.manufacturer, agg_tb2.dosage, mtble.current_amt AS qty
             FROM mobdeve_schema.TD_stocks mtble
             JOIN (
             SELECT t1.product_ID AS id, t2.name AS brandName, t5.name AS genericName, t4.name AS manufacturer, CONCAT(t1.dosage, " ", t3.name) AS dosage
