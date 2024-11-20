@@ -194,6 +194,40 @@ module.exports = (db) => {
         });
     });
 
+    router.get('/prescriptions/:id', (req, res) => {
+        const patientID = req.params.id; // Access the patientID from the URL parameter
+        const dbquery = `SELECT	    pcat.product_name AS product_name,
+                                    b.name AS brand_name,
+                                    m.name AS manufacturer_name,
+                                    g.name AS generic_name,
+                                    pcat.dosage AS dosage,
+                                    u.name AS unit_name,
+                                    pi.amt_needed AS amt_needed,
+                                    pi.take_morning AS take_morning,
+                                    pi.take_noon AS take_noon,
+                                    pi.take_night AS take_night
+                            FROM	TD_prescription_items pi
+                            JOIN	CMD_product_catalogue pcat ON pi.product_ID = pcat.product_ID
+                            JOIN 	CMD_brand b ON pcat.brand_ID = b.brand_ID
+                            JOIN	REF_manufacturer m ON b.manufacturer_ID = m.manufacturer_ID
+                            JOIN	REF_generic_name g ON b.generic_ID = g.generic_ID
+                            JOIN	REF_unit u ON pcat.unit_ID = u.unit_ID
+                            JOIN	TD_prescription p ON pi.presc_ID = p.presc_ID
+                            WHERE	p.patient_ID = ?`;
+
+        db.query(dbquery, [patientID], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Prescriptions Not Found.");
+                res.status(404).json({ message: "Prescriptions Not Found" });
+            } else {
+                res.status(200).json(results);
+            }
+        })
+    })
+
 
     return router;
 }
