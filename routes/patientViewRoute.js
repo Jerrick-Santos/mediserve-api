@@ -233,6 +233,30 @@ module.exports = (db) => {
         })
     })
 
+    router.get('/notifications/:id', (req, res) => {
+        const patientID = req.params.id; // Access the patientID from the URL parameter
+        const dbquery = `SELECT CONCAT("You have a new prescription from Dr. ", u.first_name, " ", u.last_name) AS message,
+                            p.date_created,
+                            DATE_FORMAT(p.date_created, '%b %d %Y') AS formatted_date
+                        FROM   mobdeve_schema.TD_prescription p
+                        JOIN   mobdeve_schema.MD_doctor d ON p.doctor_ID = d.doctor_ID
+                        JOIN   mobdeve_schema.MD_user u ON d.user_ID = u.user_ID
+                        WHERE  patient_id = ? AND isRead = 0;
+                        `;
+                          
+        db.query(dbquery, [patientID], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Notifications Not Found.");
+                res.status(404).json({ message: "Notifications Not Found" });
+            } else {
+                res.status(200).json(results);
+            }
+        });
+    });
+
 
     return router;
 }
