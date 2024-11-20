@@ -196,6 +196,30 @@ module.exports = (db) => {
 
     router.get('/prescriptions/:id', (req, res) => {
         const patientID = req.params.id; // Access the patientID from the URL parameter
+        const dbquery = `SELECT 	p.presc_ID AS presc_ID , 
+                                    u.last_name AS doctor_last_name, 
+                                    u.first_name AS doctor_first_name, 
+                                    p.date_created AS prescription_date_created
+                            FROM	TD_prescription p
+                            JOIN	MD_doctor d ON p.doctor_ID = d.doctor_ID
+                            JOIN	MD_user u ON d.user_ID = u.user_ID
+                            WHERE 	patient_ID = ?`;
+
+        db.query(dbquery, [patientID], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Prescriptions Not Found.");
+                res.status(404).json({ message: "Prescriptions Not Found" });
+            } else {
+                res.status(200).json(results);
+            }
+        })
+    })
+
+    router.get('/medications/:id', (req, res) => {
+        const prescID = req.params.id; // Access the patientID from the URL parameter
         const dbquery = `SELECT	    pi.presc_item_ID AS presc_item_ID,
                                     pcat.product_name AS product_name,
                                     b.name AS brand_name,
@@ -203,14 +227,10 @@ module.exports = (db) => {
                                     g.name AS generic_name,
                                     pcat.dosage AS dosage,
                                     u.name AS unit_name,
-                                    pi.presc_ID AS presc_ID,
                                     pi.amt_needed AS amt_needed,
                                     pi.take_morning AS take_morning,
                                     pi.take_noon AS take_noon,
-                                    pi.take_night AS take_night,
-                                    usr.first_name AS doctor_first_name,
-                                    usr.last_name AS doctor_last_name,
-                                    p.date_created AS prescription_date_created
+                                    pi.take_night AS take_night
                             FROM	TD_prescription_items pi
                             JOIN	CMD_product_catalogue pcat ON pi.product_ID = pcat.product_ID
                             JOIN 	CMD_brand b ON pcat.brand_ID = b.brand_ID
@@ -220,9 +240,9 @@ module.exports = (db) => {
                             JOIN	TD_prescription p ON pi.presc_ID = p.presc_ID
                             JOIN	MD_doctor d ON p.doctor_ID = d.doctor_ID
                             JOIN	MD_user usr ON d.user_ID = usr.user_ID
-                            WHERE	p.patient_ID = ?`;
+                            WHERE	pi.presc_ID = ?`;
 
-        db.query(dbquery, [patientID], (err, results) => {
+        db.query(dbquery, [prescID], (err, results) => {
             if (err) {
                 console.error("Database query error:", err);
                 res.status(500).json({ error: "Internal Server Error" });
