@@ -203,6 +203,7 @@ module.exports = (db) => {
                                     g.name AS generic_name,
                                     pcat.dosage AS dosage,
                                     u.name AS unit_name,
+                                    pi.presc_ID AS presc_ID,
                                     pi.amt_needed AS amt_needed,
                                     pi.take_morning AS take_morning,
                                     pi.take_noon AS take_noon,
