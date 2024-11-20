@@ -72,7 +72,7 @@ module.exports = (db) => {
         });
     });
 
-    router.post('/addinventory', (req, res) => {
+    router.post('/newstock', (req, res) => {
         const { pharmacyID, productID, currentAmt } = req.body;
 
         if (!pharmacyID || !productID || !currentAmt) {
