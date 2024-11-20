@@ -71,6 +71,32 @@ module.exports = (db) => {
             }
         });
     });
+
+    router.post('/addinventory', (req, res) => {
+        const { pharmacyID, productID, currentAmt } = req.body;
+
+        if (!pharmacyID || !productID || !currentAmt) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const dbquery = `
+            INSERT INTO mobdeve_schema.TD_stocks 
+            (pharmacy_id, product_id, current_amt) 
+            VALUES (?, ?, ?)
+        `;
+
+        db.query(dbquery, [pharmacyID, productID, currentAmt], (err, results) => {
+            if (err) {
+                console.error("Database insertion error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else {
+                res.status(201).json({ 
+                    message: "Reminder added successfully", 
+                    inventory_id: results.insertId 
+                });
+            }
+        });
+    });
     
 
     return router;
