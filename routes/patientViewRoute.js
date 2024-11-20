@@ -205,7 +205,10 @@ module.exports = (db) => {
                                     pi.amt_needed AS amt_needed,
                                     pi.take_morning AS take_morning,
                                     pi.take_noon AS take_noon,
-                                    pi.take_night AS take_night
+                                    pi.take_night AS take_night,
+                                    usr.first_name AS doctor_first_name,
+                                    usr.last_name AS doctor_last_name,
+                                    p.date_created AS prescription_date_created
                             FROM	TD_prescription_items pi
                             JOIN	CMD_product_catalogue pcat ON pi.product_ID = pcat.product_ID
                             JOIN 	CMD_brand b ON pcat.brand_ID = b.brand_ID
@@ -213,6 +216,8 @@ module.exports = (db) => {
                             JOIN	REF_generic_name g ON b.generic_ID = g.generic_ID
                             JOIN	REF_unit u ON pcat.unit_ID = u.unit_ID
                             JOIN	TD_prescription p ON pi.presc_ID = p.presc_ID
+                            JOIN	MD_doctor d ON p.doctor_ID = d.doctor_ID
+                            JOIN	MD_user usr ON d.user_ID = usr.user_ID
                             WHERE	p.patient_ID = ?`;
 
         db.query(dbquery, [patientID], (err, results) => {
