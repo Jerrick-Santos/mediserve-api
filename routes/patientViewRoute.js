@@ -258,6 +258,26 @@ module.exports = (db) => {
         });
     });
 
+    router.patch('/markread/:id', (req, res) => {
+        const prescID = req.params.id; // Access the presc_id from the URL parameter
+    
+        const dbquery = `UPDATE mobdeve_schema.TD_prescription 
+                         SET isRead = 1 
+                         WHERE presc_id = ?`;
+    
+        db.query(dbquery, [prescID], (err, results) => {
+            if (err) {
+                console.error("Database update error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.affectedRows === 0) {
+                res.status(404).json({ message: "Prescription not found or already updated" });
+            } else {
+                res.status(200).json({ message: "Prescription marked as read successfully" });
+            }
+        });
+    });
+    
+
 
     return router;
 }
