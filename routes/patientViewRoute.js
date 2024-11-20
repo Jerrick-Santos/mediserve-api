@@ -237,8 +237,8 @@ module.exports = (db) => {
     router.get('/notifications/:id', (req, res) => {
         const patientID = req.params.id; // Access the patientID from the URL parameter
         const dbquery = `SELECT CONCAT("You have a new prescription from Dr. ", u.first_name, " ", u.last_name) AS message,
-                            p.date_created,
-                            DATE_FORMAT(p.date_created, '%b %d %Y') AS formatted_date
+                                DATE_FORMAT(p.date_created, '%b %d %Y') AS formatted_date,
+                                p.presc_id AS notif_id
                         FROM   mobdeve_schema.TD_prescription p
                         JOIN   mobdeve_schema.MD_doctor d ON p.doctor_ID = d.doctor_ID
                         JOIN   mobdeve_schema.MD_user u ON d.user_ID = u.user_ID
