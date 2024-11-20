@@ -194,6 +194,111 @@ module.exports = (db) => {
         });
     });
 
+    router.get('/prescriptions/:id', (req, res) => {
+        const patientID = req.params.id; // Access the patientID from the URL parameter
+        const dbquery = `SELECT 	p.presc_ID AS presc_ID , 
+                                    u.last_name AS doctor_last_name, 
+                                    u.first_name AS doctor_first_name, 
+                                    p.date_created AS prescription_date_created
+                            FROM	TD_prescription p
+                            JOIN	MD_doctor d ON p.doctor_ID = d.doctor_ID
+                            JOIN	MD_user u ON d.user_ID = u.user_ID
+                            WHERE 	patient_ID = ?`;
+
+        db.query(dbquery, [patientID], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Prescriptions Not Found.");
+                res.status(404).json({ message: "Prescriptions Not Found" });
+            } else {
+                res.status(200).json(results);
+            }
+        })
+    })
+
+    router.get('/medications/:id', (req, res) => {
+        const prescID = req.params.id; // Access the patientID from the URL parameter
+        const dbquery = `SELECT	    pi.presc_item_ID AS presc_item_ID,
+                                    pcat.product_name AS product_name,
+                                    b.name AS brand_name,
+                                    m.name AS manufacturer_name,
+                                    g.name AS generic_name,
+                                    pcat.dosage AS dosage,
+                                    u.name AS unit_name,
+                                    pi.amt_needed AS amt_needed,
+                                    pi.take_morning AS take_morning,
+                                    pi.take_noon AS take_noon,
+                                    pi.take_night AS take_night
+                            FROM	TD_prescription_items pi
+                            JOIN	CMD_product_catalogue pcat ON pi.product_ID = pcat.product_ID
+                            JOIN 	CMD_brand b ON pcat.brand_ID = b.brand_ID
+                            JOIN	REF_manufacturer m ON b.manufacturer_ID = m.manufacturer_ID
+                            JOIN	REF_generic_name g ON b.generic_ID = g.generic_ID
+                            JOIN	REF_unit u ON pcat.unit_ID = u.unit_ID
+                            JOIN	TD_prescription p ON pi.presc_ID = p.presc_ID
+                            JOIN	MD_doctor d ON p.doctor_ID = d.doctor_ID
+                            JOIN	MD_user usr ON d.user_ID = usr.user_ID
+                            WHERE	pi.presc_ID = ?`;
+
+        db.query(dbquery, [prescID], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Prescriptions Not Found.");
+                res.status(404).json({ message: "Prescriptions Not Found" });
+            } else {
+                res.status(200).json(results);
+            }
+        })
+    })
+
+    router.get('/notifications/:id', (req, res) => {
+        const patientID = req.params.id; // Access the patientID from the URL parameter
+        const dbquery = `SELECT CONCAT("You have a new prescription from Dr. ", u.first_name, " ", u.last_name) AS message,
+                                DATE_FORMAT(p.date_created, '%b %d %Y') AS formatted_date,
+                                p.presc_id AS notif_id
+                        FROM   mobdeve_schema.TD_prescription p
+                        JOIN   mobdeve_schema.MD_doctor d ON p.doctor_ID = d.doctor_ID
+                        JOIN   mobdeve_schema.MD_user u ON d.user_ID = u.user_ID
+                        WHERE  patient_id = ? AND isRead = 0;
+                        `;
+                          
+        db.query(dbquery, [patientID], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Notifications Not Found.");
+                res.status(404).json({ message: "Notifications Not Found" });
+            } else {
+                res.status(200).json(results);
+            }
+        });
+    });
+
+    router.patch('/markread/:id', (req, res) => {
+        const prescID = req.params.id; // Access the presc_id from the URL parameter
+    
+        const dbquery = `UPDATE mobdeve_schema.TD_prescription 
+                         SET isRead = 1 
+                         WHERE presc_id = ?`;
+    
+        db.query(dbquery, [prescID], (err, results) => {
+            if (err) {
+                console.error("Database update error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.affectedRows === 0) {
+                res.status(404).json({ message: "Prescription not found or already updated" });
+            } else {
+                res.status(200).json({ message: "Prescription marked as read successfully" });
+            }
+        });
+    });
+    
+
 
     return router;
 }
