@@ -196,7 +196,8 @@ module.exports = (db) => {
 
     router.get('/prescriptions/:id', (req, res) => {
         const patientID = req.params.id; // Access the patientID from the URL parameter
-        const dbquery = `SELECT	    pcat.product_name AS product_name,
+        const dbquery = `SELECT	    pi.presc_item_ID AS presc_item_ID,
+                                    pcat.product_name AS product_name,
                                     b.name AS brand_name,
                                     m.name AS manufacturer_name,
                                     g.name AS generic_name,
