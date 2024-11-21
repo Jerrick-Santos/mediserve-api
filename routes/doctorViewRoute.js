@@ -4,7 +4,7 @@ const router = express.Router();
 module.exports = (db) => {
     
     router.get('/allpatientsByDoctor', (req, res) => {
-        const { doctor_id } = req.body
+        const { doctor_id } = req.query
         const query =  `SELECT DISTINCT u.user_ID as id,
 		                CONCAT(u.last_name, ", ", u.first_name)as name
                         FROM MD_patient p
@@ -26,7 +26,7 @@ module.exports = (db) => {
 
 
     router.get('/getPrescriptionByPatient', (req, res) => {
-        const { patient_id } = req.body
+        const { patient_id } = req.query
         const query =   `SELECT 
                             p.presc_ID AS id, 
                             p.date_created, 
