@@ -232,39 +232,58 @@ module.exports = (db) => {
     });
 
     router.patch('/checkout', (req, res) => {
-        const {pharmacyID} = req.body;
-        
-        // GET current_amt 
-
-        const dbquery_get = `SELECT t1.stock_ID, t2.current_amt - t1.qty AS new_amt
-        FROM mobdeve_schema.TD_pharmacy_cart t1
-        JOIN mobdeve_schema.TD_stocks t2 ON t1.stock_ID = t2.stock_ID 
-        WHERE t1.pharmacy_ID = ?;
-        `
-
-        // UPDATE current_amt 
-
-        const dbquery_update = `UPDATE mobdeve_schema.TD_stocks SET current_amt = ? WHERE stock_ID = ?`;
-
-        // POST new Transaction
-        const dbquery_post = `INSERT INTO mobdeve_schema.TD_stock_transactions (stock_ID, date, change_type, qty) VALUES (?, NOW(), ?, ?)`;
-
-
+        const { pharmacyID } = req.body;
+    
+        const dbquery_get = `
+            SELECT t1.stock_ID, t2.current_amt - t1.qty AS new_amt
+            FROM mobdeve_schema.TD_pharmacy_cart t1
+            JOIN mobdeve_schema.TD_stocks t2 ON t1.stock_ID = t2.stock_ID 
+            WHERE t1.pharmacy_ID = ?;
+        `;
+    
+        const dbquery_update = `
+            UPDATE mobdeve_schema.TD_stocks 
+            SET current_amt = ? 
+            WHERE stock_ID = ?;
+        `;
+    
         db.query(dbquery_get, [pharmacyID], (err, results) => {
             if (err) {
                 console.error("Database query error:", err);
                 res.status(500).json({ error: "Internal Server Error" });
-            } else if (results.length === 0) {
+                return;
+            }
+    
+            if (results.length === 0) {
                 console.log("All Items are out of stock.");
                 res.status(404).json({ message: "All Items are out of stock" });
-            } else {
-
-                res.status(201).json(results);
+                return;
             }
+    
+            // Use Promise.all to handle multiple update queries
+            const updatePromises = results.map(item => {
+                return new Promise((resolve, reject) => {
+                    db.query(dbquery_update, [item.new_amt, item.stock_ID], (updateErr) => {
+                        if (updateErr) {
+                            reject(updateErr);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+            });
+    
+            Promise.all(updatePromises)
+                .then(() => {
+                    res.status(200).json({ message: "Stock quantities updated successfully." });
+                })
+                .catch(updateErr => {
+                    console.error("Database update error:", updateErr);
+                    res.status(500).json({ error: "Failed to update stock quantities." });
+                });
         });
-        
-
     });
+    
 
     
 
