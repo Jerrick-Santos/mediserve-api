@@ -6,7 +6,9 @@ module.exports = (db) => {
     router.get('/allpatientsByDoctor', (req, res) => {
         const { doctor_id } = req.query
         const query =  `SELECT DISTINCT u.user_ID as id,
-		                CONCAT(u.last_name, ", ", u.first_name)as name
+		                CONCAT(u.last_name, ", ", u.first_name)as name,
+                        p.birthdate, p.gender, p.height, p.weight,
+                        p.bp, p.bpi, p.other_info, p.contact_num, p.email
                         FROM MD_patient p
                         JOIN MD_user u ON p.user_ID = u.user_ID
                         JOIN TD_prescription pr ON pr.patient_ID = p.patient_ID
