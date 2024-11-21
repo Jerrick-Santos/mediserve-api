@@ -230,6 +230,42 @@ module.exports = (db) => {
             }
         });
     });
+
+    router.patch('/editstock', (req, res) => {
+        const {pharmacyID} = req.body;
+        
+        // GET current_amt 
+
+        const dbquery_get = `SELECT t1.stock_ID, t2.current_amt - t1.qty AS new_amt
+        FROM mobdeve_schema.TD_pharmacy_cart t1
+        JOIN mobdeve_schema.TD_stocks t2 ON t1.stock_ID = t2.stock_ID 
+        WHERE t1.pharmacy_ID = ?;
+        `
+
+        // UPDATE current_amt 
+
+        const dbquery_update = `UPDATE mobdeve_schema.TD_stocks SET current_amt = ? WHERE stock_ID = ?`;
+
+        // POST new Transaction
+        const dbquery_post = `INSERT INTO mobdeve_schema.TD_stock_transactions (stock_ID, date, change_type, qty) VALUES (?, NOW(), ?, ?)`;
+
+
+        db.query(dbquery_get, [pharmacyID], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("All Items are out of stock.");
+                res.status(404).json({ message: "All Items are out of stock" });
+            } else {
+
+                res.status(201).json(results);
+            }
+        });
+        
+
+    });
+
     
 
     return router;
