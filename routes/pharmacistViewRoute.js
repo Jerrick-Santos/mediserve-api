@@ -252,6 +252,11 @@ module.exports = (db) => {
             VALUES (?, NOW(), "deduct", ?);
         `;
     
+        const dbquery_delete_cart = `
+            DELETE FROM mobdeve_schema.TD_pharmacy_cart 
+            WHERE pharmacy_ID = ?;
+        `;
+    
         db.query(dbquery_get, [pharmacyID], (err, results) => {
             if (err) {
                 console.error("Database query error:", err);
@@ -265,7 +270,7 @@ module.exports = (db) => {
                 return;
             }
     
-            // Use Promise.all to handle multiple update and insert queries
+            // Use Promise.all to handle update and insert queries
             const transactionPromises = results.map(item => {
                 return new Promise((resolve, reject) => {
                     // Update the stock quantity
@@ -286,16 +291,31 @@ module.exports = (db) => {
                 });
             });
     
+            // Process all updates and inserts, then delete the cart
             Promise.all(transactionPromises)
                 .then(() => {
-                    res.status(200).json({ message: "Stock quantities updated and transactions recorded successfully." });
+                    return new Promise((resolve, reject) => {
+                        db.query(dbquery_delete_cart, [pharmacyID], (deleteErr) => {
+                            if (deleteErr) {
+                                reject(deleteErr);
+                            } else {
+                                resolve();
+                            }
+                        });
+                    });
+                })
+                .then(() => {
+                    res.status(200).json({ 
+                        message: "Stock quantities updated, transactions recorded, and cart cleared successfully." 
+                    });
                 })
                 .catch(transactionErr => {
                     console.error("Database transaction error:", transactionErr);
-                    res.status(500).json({ error: "Failed to process transactions." });
+                    res.status(500).json({ error: "Failed to process checkout." });
                 });
         });
     });
+    
     
 
     
