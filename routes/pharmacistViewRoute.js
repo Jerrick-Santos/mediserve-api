@@ -100,7 +100,7 @@ module.exports = (db) => {
 
 
     router.patch('/editstock', (req, res) => {
-        const { pharmacyID, stockID, changeType, amt } = req.body;
+        const {stockID, changeType, amt } = req.body;
         
         // GET current_amt 
 
@@ -111,7 +111,7 @@ module.exports = (db) => {
         const dbquery_update = `UPDATE mobdeve_schema.TD_stocks SET current_amt = ? WHERE stock_ID = ?`;
 
         // POST new Transaction
-        const dbquery_post = `INSERT INTO mobdeve_schema.TD_stocks (stock_ID, date, change_type, qty) VALUES (?, ?, ?, ?)`;
+        const dbquery_post = `INSERT INTO mobdeve_schema.TD_stock_transactions (stock_ID, date, change_type, qty) VALUES (?, NOW(), ?, ?)`;
 
 
         db.query(dbquery_get, [stockID], (err, results) => {
@@ -134,10 +134,23 @@ module.exports = (db) => {
                     new_amt = current_amt - amt
                 }
 
-                res.status(200).json({current_amt, new_amt});
-
-
-
+                db.query(dbquery_update, [new_amt, stockID], (err, results) => {
+                    if (err) {
+                        console.error("Database UPDATE error:", err);
+                        res.status(500).json({ error: "Internal Server Error" });
+                    } else {
+                        db.query(dbquery_post, [stockID, changeType, amt], (err, results) => {
+                            if (err) {
+                                console.error("Database INSERTION error:", err);
+                                res.status(500).json({ error: "Internal Server Error" });
+                            } else {
+                                res.status(201).json({ 
+                                    message: "Inventory edited and added to transactions list successfully"
+                                });
+                            }
+                        });
+                    }
+                });
             }
         });
         
