@@ -235,7 +235,7 @@ module.exports = (db) => {
         const { pharmacyID } = req.body;
     
         const dbquery_get = `
-            SELECT t1.stock_ID, t2.current_amt - t1.qty AS new_amt
+            SELECT t1.stock_ID, t1.qty, t2.current_amt - t1.qty AS new_amt
             FROM mobdeve_schema.TD_pharmacy_cart t1
             JOIN mobdeve_schema.TD_stocks t2 ON t1.stock_ID = t2.stock_ID 
             WHERE t1.pharmacy_ID = ?;
@@ -246,6 +246,9 @@ module.exports = (db) => {
             SET current_amt = ? 
             WHERE stock_ID = ?;
         `;
+
+        // POST new Transaction
+        const dbquery_post = `INSERT INTO mobdeve_schema.TD_stock_transactions (stock_ID, date, change_type, qty) VALUES (?, NOW(), "deduct", ?)`;
     
         db.query(dbquery_get, [pharmacyID], (err, results) => {
             if (err) {
