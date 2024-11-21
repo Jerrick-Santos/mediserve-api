@@ -31,8 +31,8 @@ module.exports = (db) => {
 
     router.get('/patientprescriptionitems/:id', (req, res) => {
         const patientID = req.params.id; // Access the patientID from the URL parameter
-        const dbquery = `SELECT 	DISTINCT pc.product_ID,
-                                    pc.product_name
+        const dbquery = `SELECT 	DISTINCT pc.product_name,
+                                    pi.presc_item_id
                             FROM 	mobdeve_schema.TD_prescription p
                             JOIN 	mobdeve_schema.TD_prescription_items pi 	ON pi.presc_id = p.presc_id
                             JOIN 	mobdeve_schema.MD_patient	pt				ON pt.patient_id = p.patient_id
