@@ -266,7 +266,7 @@ module.exports = (db) => {
     
             if (results.length === 0) {
                 console.log("All Items are out of stock.");
-                res.status(404).json({ message: "All Items are out of stock" });
+                res.status(404).json({ message: "All Items are out of stock or there is no items in cart" });
                 return;
             }
     
