@@ -246,9 +246,11 @@ module.exports = (db) => {
             SET current_amt = ? 
             WHERE stock_ID = ?;
         `;
-
-        // POST new Transaction
-        const dbquery_post = `INSERT INTO mobdeve_schema.TD_stock_transactions (stock_ID, date, change_type, qty) VALUES (?, NOW(), "deduct", ?)`;
+    
+        const dbquery_post = `
+            INSERT INTO mobdeve_schema.TD_stock_transactions (stock_ID, date, change_type, qty) 
+            VALUES (?, NOW(), "deduct", ?);
+        `;
     
         db.query(dbquery_get, [pharmacyID], (err, results) => {
             if (err) {
@@ -263,26 +265,34 @@ module.exports = (db) => {
                 return;
             }
     
-            // Use Promise.all to handle multiple update queries
-            const updatePromises = results.map(item => {
+            // Use Promise.all to handle multiple update and insert queries
+            const transactionPromises = results.map(item => {
                 return new Promise((resolve, reject) => {
+                    // Update the stock quantity
                     db.query(dbquery_update, [item.new_amt, item.stock_ID], (updateErr) => {
                         if (updateErr) {
                             reject(updateErr);
                         } else {
-                            resolve();
+                            // Insert a transaction record
+                            db.query(dbquery_post, [item.stock_ID, item.qty], (insertErr) => {
+                                if (insertErr) {
+                                    reject(insertErr);
+                                } else {
+                                    resolve();
+                                }
+                            });
                         }
                     });
                 });
             });
     
-            Promise.all(updatePromises)
+            Promise.all(transactionPromises)
                 .then(() => {
-                    res.status(200).json({ message: "Stock quantities updated successfully." });
+                    res.status(200).json({ message: "Stock quantities updated and transactions recorded successfully." });
                 })
-                .catch(updateErr => {
-                    console.error("Database update error:", updateErr);
-                    res.status(500).json({ error: "Failed to update stock quantities." });
+                .catch(transactionErr => {
+                    console.error("Database transaction error:", transactionErr);
+                    res.status(500).json({ error: "Failed to process transactions." });
                 });
         });
     });
