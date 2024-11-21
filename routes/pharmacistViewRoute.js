@@ -231,7 +231,7 @@ module.exports = (db) => {
         });
     });
 
-    router.patch('/editstock', (req, res) => {
+    router.patch('/checkout', (req, res) => {
         const {pharmacyID} = req.body;
         
         // GET current_amt 
