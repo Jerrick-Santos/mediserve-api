@@ -266,7 +266,7 @@ module.exports = (db) => {
     
             if (results.length === 0) {
                 console.log("All Items are out of stock.");
-                res.status(404).json({ message: "All Items are out of stock or there is no items in cart" });
+                res.status(200).json({ message: "All Items are out of stock or there is no items in cart" });
                 return;
             }
     
@@ -315,6 +315,32 @@ module.exports = (db) => {
                 });
         });
     });
+
+    router.delete('/cart', (req, res) => {
+        const { pharmacyID } = req.body;
+    
+        const dbquery_delete_cart = `
+            DELETE FROM mobdeve_schema.TD_pharmacy_cart 
+            WHERE pharmacy_ID = ?;
+        `;
+    
+        db.query(dbquery_delete_cart, [pharmacyID], (err, result) => {
+            if (err) {
+                console.error("Database deletion error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+                return;
+            }
+    
+            if (result.affectedRows === 0) {
+                console.log("Cart is already empty.");
+                res.status(200).json({ message: "Cart is already empty." });
+                return;
+            }
+    
+            res.status(200).json({ message: "Cart cleared successfully." });
+        });
+    });
+    
     
     
 
