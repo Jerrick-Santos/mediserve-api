@@ -97,7 +97,40 @@ module.exports = (db) => {
             }
         });
     });
-    
+
+
+    router.patch('/editstock', (req, res) => {
+        const { pharmacyID, stockID, changeType, amt } = req.body;
+        
+        // GET current_amt 
+
+        const dbquery_get = `SELECT current_amt FROM mobdeve_schema.TD_stocks WHERE stock_ID = ?;`
+
+        // UPDATE current_amt 
+
+        const dbquery_update = `UPDATE mobdeve_schema.TD_stocks SET current_amt = ? WHERE stock_ID = ?`;
+
+        // POST new Transaction
+        const dbquery_post = `INSERT INTO mobdeve_schema.TD_stocks (stock_ID, date, change_type, qty) VALUES (?, ?, ?, ?)`;
+
+
+        db.query(dbquery_get, [stockID], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Stock AMT Not Found.");
+                res.status(404).json({ message: "Stock AMT Not Found" });
+            } else {
+
+                current_amt = results[0].current_amt 
+                res.status(200).json(current_amt);
+
+            }
+        });
+        
+
+    });
 
     return router;
 }
