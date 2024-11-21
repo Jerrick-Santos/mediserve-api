@@ -71,7 +71,91 @@ module.exports = (db) => {
             }
         });
     });
-    
+
+    router.post('/newstock', (req, res) => {
+        const { pharmacyID, productID, currentAmt } = req.body;
+
+        if (!pharmacyID || !productID || !currentAmt) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const dbquery = `
+            INSERT INTO mobdeve_schema.TD_stocks 
+            (stock_ID, pharmacy_ID, product_ID, current_amt) 
+            VALUES (?, ?, ?, ?)
+        `;
+
+        db.query(dbquery, [500 + productID, pharmacyID, productID, currentAmt], (err, results) => {
+            if (err) {
+                console.error("Database insertion error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else {
+                res.status(201).json({ 
+                    message: "Reminder added successfully", 
+                    inventory_id: results.insertId 
+                });
+            }
+        });
+    });
+
+
+    router.patch('/editstock', (req, res) => {
+        const {stockID, changeType, amt } = req.body;
+        
+        // GET current_amt 
+
+        const dbquery_get = `SELECT current_amt FROM mobdeve_schema.TD_stocks WHERE stock_ID = ?;`
+
+        // UPDATE current_amt 
+
+        const dbquery_update = `UPDATE mobdeve_schema.TD_stocks SET current_amt = ? WHERE stock_ID = ?`;
+
+        // POST new Transaction
+        const dbquery_post = `INSERT INTO mobdeve_schema.TD_stock_transactions (stock_ID, date, change_type, qty) VALUES (?, NOW(), ?, ?)`;
+
+
+        db.query(dbquery_get, [stockID], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Stock AMT Not Found.");
+                res.status(404).json({ message: "Stock AMT Not Found" });
+            } else {
+
+                const current_amt = results[0].current_amt
+                
+                var new_amt = null
+
+                if (changeType === "add") {
+                    new_amt = current_amt + amt
+                }
+                else{
+                    new_amt = current_amt - amt
+                }
+
+                db.query(dbquery_update, [new_amt, stockID], (err, results) => {
+                    if (err) {
+                        console.error("Database UPDATE error:", err);
+                        res.status(500).json({ error: "Internal Server Error" });
+                    } else {
+                        db.query(dbquery_post, [stockID, changeType, amt], (err, results) => {
+                            if (err) {
+                                console.error("Database INSERTION error:", err);
+                                res.status(500).json({ error: "Internal Server Error" });
+                            } else {
+                                res.status(201).json({ 
+                                    message: "Inventory edited and added to transactions list successfully"
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        
+
+    });
 
     return router;
 }
