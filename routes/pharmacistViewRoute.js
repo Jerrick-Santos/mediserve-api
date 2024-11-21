@@ -158,7 +158,7 @@ module.exports = (db) => {
     });
 
 
-    router.get('/getcart', (req, res) => {
+    router.get('/viewcart', (req, res) => {
         const { pharmacyID } = req.query;
         const dbquery = `SELECT t3.name AS brandName,t1.cart_ID AS cartID,t1.qty
         FROM mobdeve_schema.TD_pharmacy_cart t1
@@ -181,7 +181,7 @@ module.exports = (db) => {
     router.post('/addcart', (req, res) => {
         const { pharmacyID, stockID, qty } = req.body;
 
-        if (!pharmacyID || !stockID || qty) {
+        if (!pharmacyID || !stockID || !qty) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
@@ -189,7 +189,7 @@ module.exports = (db) => {
         INSERT INTO mobdeve_schema.TD_pharmacy_cart (pharmacy_ID, stock_ID, qty) VALUES (?, ?, ?);
         `;
 
-        db.query(dbquery, [pharmacyID, stockID,qty], (err, results) => {
+        db.query(dbquery, [pharmacyID, stockID, qty], (err, results) => {
             if (err) {
                 console.error("Database insertion error:", err);
                 res.status(500).json({ error: "Internal Server Error" });
