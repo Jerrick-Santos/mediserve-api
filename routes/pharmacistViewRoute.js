@@ -204,31 +204,33 @@ module.exports = (db) => {
 
 
     router.post('/scantocart', (req, res) => {
-        const { prescID, pharmacyID,} = req.body;
-
-        const dbquery = `SELECT t1.stock_ID AS stockID, t2.amt_needed AS qty 
-                        FROM mobdeve_schema.TD_stocks t1 
-                        JOIN mobdeve_schema.TD_prescription_items t2 ON t1.product_ID = t2.product_ID
-                        JOIN mobdeve_schema.CMD_brand t3 ON t2.product_ID = t3.brand_ID
-                        WHERE t2.presc_ID = ? AND t1.pharmacy_ID = ? AND t1.current_amt >= t2.amt_needed;`
-        db.query(dbquery, [prescID, pharmacyID], (err, results) => {
+        const { prescID, pharmacyID } = req.body;
+    
+        const dbquery = `
+            INSERT INTO mobdeve_schema.TD_pharmacy_cart (pharmacy_ID, stock_ID, qty)
+            SELECT ?, t1.stock_ID, t2.amt_needed
+            FROM mobdeve_schema.TD_stocks t1
+            JOIN mobdeve_schema.TD_prescription_items t2 ON t1.product_ID = t2.product_ID
+            JOIN mobdeve_schema.CMD_brand t3 ON t2.product_ID = t3.brand_ID
+            WHERE t2.presc_ID = ? AND t1.pharmacy_ID = ? AND t1.current_amt >= t2.amt_needed;
+        `;
+    
+        db.query(dbquery, [pharmacyID, prescID, pharmacyID], (err, results) => {
             if (err) {
                 console.error("Database query error:", err);
                 res.status(500).json({ error: "Internal Server Error" });
-            } else if (results.length === 0) {
-                console.log("Items Not Found.");
-                res.status(404).json({ message: "No Stocks are applicable" });
+            } else if (results.affectedRows === 0) {
+                console.log("No stocks found or inserted.");
+                res.status(404).json({ message: "No stocks are applicable for the prescription" });
             } else {
-                res.status(200).json(results);
-
-                // for (let i = 0; i < results.length; i++) {
-                    
-                    
-                // }
+                res.status(201).json({ 
+                    message: "Cart items added successfully",
+                    rowsInserted: results.affectedRows
+                });
             }
         });
-
     });
+    
 
     return router;
 }
