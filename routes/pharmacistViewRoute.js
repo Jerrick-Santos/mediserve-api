@@ -126,7 +126,7 @@ module.exports = (db) => {
                 const current_amt = results[0].current_amt
                 
                 var new_amt = null
-                
+
                 if (changeType === "add") {
                     new_amt = current_amt + amt
                 }
@@ -134,7 +134,7 @@ module.exports = (db) => {
                     new_amt = current_amt - amt
                 }
 
-                res.status(200).json(current_amt, new_amt);
+                res.status(200).json({current_amt, new_amt});
 
 
 
