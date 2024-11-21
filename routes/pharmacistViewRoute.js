@@ -157,5 +157,50 @@ module.exports = (db) => {
 
     });
 
+
+    router.get('/getcart', (req, res) => {
+        const { pharmacyID } = req.query;
+        const dbquery = `SELECT t3.name AS brandName,t1.cart_ID AS cartID,t1.qty
+        FROM mobdeve_schema.TD_pharmacy_cart t1
+        JOIN TD_stocks t2 ON t1.stock_ID = t2.stock_ID
+        JOIN CMD_brand t3 ON t2.product_ID = t3.brand_ID
+        WHERE t1.pharmacy_ID = ?;`
+        db.query(dbquery, [pharmacyID], (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Cart Not Found.");
+                res.status(404).json({ message: "Cart Not Found" });
+            } else {
+                res.status(200).json(results);
+            }
+        });
+    });
+
+    router.post('/addcart', (req, res) => {
+        const { pharmacyID, stockID, qty } = req.body;
+
+        if (!pharmacyID || !stockID || qty) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const dbquery = `
+        INSERT INTO mobdeve_schema.TD_pharmacy_cart (pharmacy_ID, stock_ID, qty) VALUES (?, ?, ?);
+        `;
+
+        db.query(dbquery, [pharmacyID, stockID,qty], (err, results) => {
+            if (err) {
+                console.error("Database insertion error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else {
+                res.status(201).json({ 
+                    message: "Cart Item added successfully", 
+                    inventory_id: results.insertId 
+                });
+            }
+        });
+    });
+
     return router;
 }
