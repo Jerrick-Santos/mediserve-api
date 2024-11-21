@@ -123,8 +123,20 @@ module.exports = (db) => {
                 res.status(404).json({ message: "Stock AMT Not Found" });
             } else {
 
-                current_amt = results[0].current_amt 
-                res.status(200).json(current_amt);
+                const current_amt = results[0].current_amt
+                
+                var new_amt = null
+                
+                if (changeType === "add") {
+                    new_amt = current_amt + amt
+                }
+                else{
+                    new_amt = current_amt - amt
+                }
+
+                res.status(200).json(current_amt, new_amt);
+
+
 
             }
         });
