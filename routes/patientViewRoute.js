@@ -84,78 +84,57 @@ module.exports = (db) => {
             SELECT user_ID FROM mobdeve_schema.MD_patient WHERE patient_ID = ?
         `;
     
-        // Query to check if the patient exists
+        // Query to update MD_user table
+        const updateUserQuery = `
+            UPDATE mobdeve_schema.MD_user
+            SET first_name = ?, last_name = ?
+            WHERE user_ID = ?
+        `;
+        
+        // Query to update MD_patient table
+        const updatePatientQuery = `
+            UPDATE mobdeve_schema.MD_patient
+            SET height = ?, weight = ?, bmi = ?, email = ?, address = ?, gender = ?, 
+                contact_num = ?, birthdate = ?, bp = ?
+            WHERE patient_ID = ?
+        `;
+    
+        // Step 1: Fetch user_ID based on patientID
         db.query(getUserIDQuery, [patientID], (err, results) => {
             if (err) {
                 console.error("Error fetching user_ID:", err);
                 return res.status(500).json({ error: "Error fetching user_ID" });
             }
     
-            // If patient does not exist, return error
+            // If no user found for the given patientID, return an error
             if (results.length === 0) {
                 return res.status(404).json({ error: "Patient not found" });
             }
     
-            // Step 2: Extract the user_ID
+            // Step 2: Extract user_ID
             const userID = results[0].user_ID;
     
-            // Start a transaction
-            db.beginTransaction((err) => {
+            // Step 3: Update MD_user table
+            db.query(updateUserQuery, [first_name, last_name, userID], (err, results) => {
                 if (err) {
-                    console.error("Transaction error:", err);
-                    return res.status(500).json({ error: "Transaction error" });
+                    console.error("Error updating MD_user:", err);
+                    return res.status(500).json({ error: "Error updating MD_user" });
                 }
     
-                // Query to update MD_user table
-                const updateUserQuery = `
-                    UPDATE mobdeve_schema.MD_user
-                    SET first_name = ?, last_name = ?
-                    WHERE user_ID = ?
-                `;
-    
-                // Query to update MD_patient table
-                const updatePatientQuery = `
-                    UPDATE mobdeve_schema.MD_patient
-                    SET height = ?, weight = ?, bmi = ?, email = ?, address = ?, gender = ?, 
-                        contact_num = ?, birthdate = ?, bp = ?
-                    WHERE patient_ID = ?
-                `;
-    
-                // Step 3: Update MD_user table using user_ID
-                db.query(updateUserQuery, [first_name, last_name, userID], (err, results) => {
+                // Step 4: Update MD_patient table
+                db.query(updatePatientQuery, [height, weight, bmi, email, address, gender, contact_num, birthdate, bp, patientID], (err, results) => {
                     if (err) {
-                        console.error("Error updating MD_user:", err);
-                        return db.rollback(() => {
-                            res.status(500).json({ error: "Error updating MD_user" });
-                        });
+                        console.error("Error updating MD_patient:", err);
+                        return res.status(500).json({ error: "Error updating MD_patient" });
                     }
     
-                    // Step 4: Update MD_patient table
-                    db.query(updatePatientQuery, [height, weight, bmi, email, address, gender, contact_num, birthdate, bp, patientID], (err, results) => {
-                        if (err) {
-                            console.error("Error updating MD_patient:", err);
-                            return db.rollback(() => {
-                                res.status(500).json({ error: "Error updating MD_patient" });
-                            });
-                        }
-    
-                        // Commit the transaction
-                        db.commit((err) => {
-                            if (err) {
-                                console.error("Error committing transaction:", err);
-                                return db.rollback(() => {
-                                    res.status(500).json({ error: "Error committing transaction" });
-                                });
-                            }
-    
-                            console.log("Profile updated successfully!");
-                            res.status(200).json({ message: "Profile updated successfully" });
-                        });
-                    });
+                    console.log("Profile updated successfully!");
+                    res.status(200).json({ message: "Profile updated successfully" });
                 });
             });
         });
     });
+    
     
     
 
