@@ -232,7 +232,7 @@ module.exports = (db) => {
     });
 
     router.patch('/checkout', (req, res) => {
-        const { pharmacyID } = req.body;
+        const { pharmacyID } = req.query;
     
         const dbquery_get = `
             SELECT t1.stock_ID, t1.qty, t2.current_amt - t1.qty AS new_amt
@@ -316,8 +316,8 @@ module.exports = (db) => {
         });
     });
 
-    router.delete('/cart', (req, res) => {
-        const { pharmacyID } = req.body;
+    router.delete('/clearcart', (req, res) => {
+        const { pharmacyID } = req.query;
     
         const dbquery_delete_cart = `
             DELETE FROM mobdeve_schema.TD_pharmacy_cart 
