@@ -72,6 +72,75 @@ module.exports = (db) => {
         })
     })
 
+    router.patch('editprofile/:id', (req, res) => {
+        const patientID = req.params.id; // Access the patientID from the URL parameter
+        const {
+            first_name, last_name, height, weight, bmi, email,
+            address, gender, contact_num, birthdate, bp
+        } = req.body;
+
+        const updateUserQuery = `
+            UPDATE mobdeve_schema.MD_user
+            SET first_name = IFNULL(?, first_name),
+                last_name = IFNULL(?, last_name)
+            WHERE user_ID = (SELECT user_ID FROM mobdeve_schema.MD_patient WHERE patient_ID = ?)
+        `;
+
+        const updatePatientQuery = `
+            UPDATE mobdeve_schema.MD_patient
+            SET height = IFNULL(?, height),
+                weight = IFNULL(?, weight),
+                bmi = IFNULL(?, bmi),
+                email = IFNULL(?, email),
+                address = IFNULL(?, address),
+                gender = IFNULL(?, gender),
+                contact_num = IFNULL(?, contact_num),
+                birthdate = IFNULL(?, birthdate),
+                bp = IFNULL(?, bp)
+            WHERE patient_ID = ?
+        `;
+
+        // Start transaction
+        db.beginTransaction((err) => {
+            if (err) {
+                console.error("Transaction error:", err);
+                return res.status(500).json({ error: "Transaction error" });
+            }
+
+            // Update MD_user table
+            db.query(updateUserQuery, [first_name, last_name, patientID], (err, results) => {
+                if (err) {
+                    console.error("Error updating MD_user:", err);
+                    return db.rollback(() => {
+                        res.status(500).json({ error: "Error updating MD_user" });
+                    });
+                }
+
+                // Update MD_patient table
+                db.query(updatePatientQuery, [height, weight, bmi, email, address, gender, contact_num, birthdate, bp, patientID], (err, results) => {
+                    if (err) {
+                        console.error("Error updating MD_patient:", err);
+                        return db.rollback(() => {
+                            res.status(500).json({ error: "Error updating MD_patient" });
+                        });
+                    }
+
+                    // Commit transaction
+                    db.commit((err) => {
+                        if (err) {
+                            console.error("Transaction commit error:", err);
+                            return db.rollback(() => {
+                                res.status(500).json({ error: "Transaction commit error" });
+                            });
+                        }
+
+                        res.status(200).json({ message: "Profile updated successfully" });
+                    });
+                });
+            });
+        });
+    })
+
     router.post('/reminders', (req, res) => {
         const { start_date, end_date, time, presc_item_id } = req.body;
 
