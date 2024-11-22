@@ -72,66 +72,91 @@ module.exports = (db) => {
         })
     })
 
-    router.patch('/editprofile/:id', async (req, res) => {
-        const patientId = req.params.id;
+    router.patch('/editprofile/:id', (req, res) => {
+        const patientID = req.params.id;  // Access the patientID from the URL parameter
         const {
-          first_name,
-          last_name,
-          height,
-          weight,
-          bmi,
-          email,
-          address,
-          gender,
-          contact_num,
-          birthdate,
-          bp,
+            first_name, last_name, height, weight, bmi, email,
+            address, gender, contact_num, birthdate, bp
         } = req.body;
     
-        try {
-          // Update MD_user table
-           const updateUserQuery = `
-             UPDATE mobdeve_schema.MD_user
-             SET first_name = IFNULL(?, first_name),
-                 last_name = IFNULL(?, last_name)
-             WHERE user_ID = (SELECT user_ID FROM mobdeve_schema.MD_patient WHERE patient_ID = ?)
-           `;
+        // Step 1: Query to get the user_ID for the given patient_ID
+        const getUserIDQuery = `
+            SELECT user_ID FROM mobdeve_schema.MD_patient WHERE patient_ID = ?
+        `;
     
-          const updatePatientQuery = `
-            UPDATE mobdeve_schema.MD_patient
-            SET height = IFNULL(?, height),
-                weight = IFNULL(?, weight),
-                bmi = IFNULL(?, bmi),
-                email = IFNULL(?, email),
-                address = IFNULL(?, address),
-                gender = IFNULL(?, gender),
-                contact_num = IFNULL(?, contact_num),
-                birthdate = IFNULL(?, birthdate),
-                bp = IFNULL(?, bp)
-            WHERE patient_ID = ?
-          `;
+        // Query to check if the patient exists
+        db.query(getUserIDQuery, [patientID], (err, results) => {
+            if (err) {
+                console.error("Error fetching user_ID:", err);
+                return res.status(500).json({ error: "Error fetching user_ID" });
+            }
     
-          // Execute queries
-          await db.query(updateUserQuery, [first_name, last_name, patientId]);
-          await db.query(updatePatientQuery, [
-            height,
-            weight,
-            bmi,
-            email,
-            address,
-            gender,
-            contact_num,
-            birthdate,
-            bp,
-            patientId,
-          ]);
+            // If patient does not exist, return error
+            if (results.length === 0) {
+                return res.status(404).json({ error: "Patient not found" });
+            }
     
-          res.status(200).json({ message: 'Profile updated successfully' });
-        } catch (error) {
-          console.error('Error updating profile:', error);
-          res.status(500).json({ error: 'Failed to update profile' });
-        }
+            // Step 2: Extract the user_ID
+            const userID = results[0].user_ID;
+    
+            // Start a transaction
+            db.beginTransaction((err) => {
+                if (err) {
+                    console.error("Transaction error:", err);
+                    return res.status(500).json({ error: "Transaction error" });
+                }
+    
+                // Query to update MD_user table
+                const updateUserQuery = `
+                    UPDATE mobdeve_schema.MD_user
+                    SET first_name = ?, last_name = ?
+                    WHERE user_ID = ?
+                `;
+    
+                // Query to update MD_patient table
+                const updatePatientQuery = `
+                    UPDATE mobdeve_schema.MD_patient
+                    SET height = ?, weight = ?, bmi = ?, email = ?, address = ?, gender = ?, 
+                        contact_num = ?, birthdate = ?, bp = ?
+                    WHERE patient_ID = ?
+                `;
+    
+                // Step 3: Update MD_user table using user_ID
+                db.query(updateUserQuery, [first_name, last_name, userID], (err, results) => {
+                    if (err) {
+                        console.error("Error updating MD_user:", err);
+                        return db.rollback(() => {
+                            res.status(500).json({ error: "Error updating MD_user" });
+                        });
+                    }
+    
+                    // Step 4: Update MD_patient table
+                    db.query(updatePatientQuery, [height, weight, bmi, email, address, gender, contact_num, birthdate, bp, patientID], (err, results) => {
+                        if (err) {
+                            console.error("Error updating MD_patient:", err);
+                            return db.rollback(() => {
+                                res.status(500).json({ error: "Error updating MD_patient" });
+                            });
+                        }
+    
+                        // Commit the transaction
+                        db.commit((err) => {
+                            if (err) {
+                                console.error("Error committing transaction:", err);
+                                return db.rollback(() => {
+                                    res.status(500).json({ error: "Error committing transaction" });
+                                });
+                            }
+    
+                            console.log("Profile updated successfully!");
+                            res.status(200).json({ message: "Profile updated successfully" });
+                        });
+                    });
+                });
+            });
+        });
     });
+    
     
 
     router.post('/reminders', (req, res) => {
