@@ -72,7 +72,7 @@ module.exports = (db) => {
         })
     })
 
-    router.patch('editprofile/:id', (req, res) => {
+    router.patch('/editprofile/:id', (req, res) => {
         const patientID = req.params.id; // Access the patientID from the URL parameter
         const {
             first_name, last_name, height, weight, bmi, email,
