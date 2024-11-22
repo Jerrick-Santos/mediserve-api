@@ -100,6 +100,7 @@ module.exports = (db) => {
             WHERE patient_ID = ?
         `;
 
+        console.log("Starting Transaction...");
         // Start transaction
         db.beginTransaction((err) => {
             if (err) {
@@ -108,6 +109,7 @@ module.exports = (db) => {
             }
 
             // Update MD_user table
+            console.log("Updating MD_user...");
             db.query(updateUserQuery, [first_name, last_name, patientID], (err, results) => {
                 if (err) {
                     console.error("Error updating MD_user:", err);
@@ -117,6 +119,7 @@ module.exports = (db) => {
                 }
 
                 // Update MD_patient table
+                console.log("Updating MD_patient...");
                 db.query(updatePatientQuery, [height, weight, bmi, email, address, gender, contact_num, birthdate, bp, patientID], (err, results) => {
                     if (err) {
                         console.error("Error updating MD_patient:", err);
@@ -126,6 +129,7 @@ module.exports = (db) => {
                     }
 
                     // Commit transaction
+                    console.log("Committing transaction...");
                     db.commit((err) => {
                         if (err) {
                             console.error("Transaction commit error:", err);
@@ -134,6 +138,7 @@ module.exports = (db) => {
                             });
                         }
 
+                        console.log("Profile updated successfully!");
                         res.status(200).json({ message: "Profile updated successfully" });
                     });
                 });
