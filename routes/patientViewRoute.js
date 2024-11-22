@@ -90,19 +90,12 @@ module.exports = (db) => {
     
         try {
           // Update MD_user table
-        //   const updateUserQuery = `
-        //     UPDATE mobdeve_schema.MD_user
-        //     SET first_name = IFNULL(?, first_name),
-        //         last_name = IFNULL(?, last_name)
-        //     WHERE user_ID = (SELECT user_ID FROM mobdeve_schema.MD_patient WHERE patient_ID = ?)
-        //   `;
-        const updateUserQuery = `
-            UPDATE mobdeve_schema.MD_user
-            INNER JOIN mobdeve_schema.MD_patient ON MD_user.user_ID = MD_patient.user_ID
-            SET MD_user.first_name = IFNULL(?, MD_user.first_name),
-                MD_user.last_name = IFNULL(?, MD_user.last_name)
-            WHERE MD_patient.patient_ID = ?
-        `;
+           const updateUserQuery = `
+             UPDATE mobdeve_schema.MD_user
+             SET first_name = IFNULL(?, first_name),
+                 last_name = IFNULL(?, last_name)
+             WHERE user_ID = (SELECT user_ID FROM mobdeve_schema.MD_patient WHERE patient_ID = ?)
+           `;
     
           const updatePatientQuery = `
             UPDATE mobdeve_schema.MD_patient
