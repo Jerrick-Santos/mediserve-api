@@ -41,7 +41,7 @@ module.exports = (db) => {
                             p.patient_id = ?
                         GROUP BY 
                             p.presc_ID`
-        const query2 =  `SELECT pi.presc_item_ID, g.name as genericName, b.name as brandName, m.name as manufacturer, pc.dosage, pi.amt_needed, pi.take_morning, pi.take_noon, pi.take_night
+        const query2 =  `SELECT pi.presc_item_ID as id, g.name as genericName, b.name as brandName, m.name as manufacturer, pc.dosage, pi.amt_needed, pi.take_morning, pi.take_noon, pi.take_night
                         FROM TD_prescription_items pi
                         JOIN CMD_product_catalogue pc ON pi.product_ID = pc.product_ID
                         JOIN CMD_brand b ON pc.brand_ID = b.brand_ID
@@ -58,7 +58,7 @@ module.exports = (db) => {
                 console.error("Database query error:", err);
                 res.status(500).json({ error: "Internal Server Error" });
             } else if (results.length === 0) {
-                console.log("No patients found.");
+                console.log("No prescription found.");
                 res.status(404).json({ message: "No prescription found" });
             } else {
                 console.log(results)
@@ -92,6 +92,30 @@ module.exports = (db) => {
                 }
             }
         })
+    })
+
+    router.get('/getPatientDetails', (req, res) => {
+        const { patient_id } = req.query
+        const query = `SELECT DISTINCT u.user_ID as id,
+		                CONCAT(u.last_name, ", ", u.first_name)as name,
+                        p.birthdate, p.gender, p.height, p.weight,
+                        p.bp, p.bmi, p.other_info, p.contact_num, p.email
+                        FROM MD_patient p
+                        JOIN MD_user u ON p.user_ID = u.user_ID
+                        JOIN TD_prescription pr ON pr.patient_ID = p.patient_ID
+                        WHERE p.patient_ID = ?`
+        db.query(query, patient_id, (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("No patients found.");
+                res.status(404).json({ message: "No patient found" });
+            } else {
+                res.status(200).json({ message: "Patient fetched successfully", data: results });
+            }
+        })
+
     })
 
     router.get('/postNewPatientByDoctor', (req, res) => {
