@@ -96,7 +96,7 @@ module.exports = (db) => {
 
     router.get('/getPatientDetails', (req, res) => {
         const { patient_id } = req.query
-        const query = `SELECT DISTINCT u.user_ID as id,
+        const query = `SELECT DISTINCT p.patient_ID as id,
 		                CONCAT(u.last_name, ", ", u.first_name)as name,
                         p.birthdate, p.gender, p.height, p.weight,
                         p.bp, p.bmi, p.other_info, p.contact_num, p.email
