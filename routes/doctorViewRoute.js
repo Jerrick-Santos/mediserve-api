@@ -104,7 +104,7 @@ module.exports = (db) => {
                         p.bp, p.bmi, p.other_info, p.contact_num, p.email
                         FROM MD_patient p
                         JOIN MD_user u ON p.user_ID = u.user_ID
-                        JOIN TD_prescription pr ON pr.patient_ID = p.patient_ID
+                        LEFT JOIN TD_prescription pr ON pr.patient_ID = p.patient_ID
                         WHERE p.patient_ID = ?`
         db.query(query, patient_id, (err, results) => {
             if (err) {
