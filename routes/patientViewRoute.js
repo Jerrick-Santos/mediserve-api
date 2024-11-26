@@ -135,7 +135,23 @@ module.exports = (db) => {
         });
     });
     
-    
+    router.get('/pharmacies', (req, res) => {
+        const dbquery = `SELECT *
+                            FROM mobdeve_schema.MD_pharmacy
+        `;
+
+        db.query(dbquery, (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Pharmacies Not Found.");
+                res.status(404).json({ message: "Pharmacies Not Found" });
+            } else {
+                res.status(200).json(results);
+            }
+        })
+    })
     
 
     router.post('/reminders', (req, res) => {
