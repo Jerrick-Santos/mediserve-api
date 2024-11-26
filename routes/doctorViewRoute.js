@@ -5,7 +5,7 @@ module.exports = (db) => {
     
     router.get('/allpatientsByDoctor', (req, res) => {
         const { doctor_id } = req.query
-        const query =  `SELECT DISTINCT u.user_ID as id,
+        const query =  `SELECT DISTINCT p.patient_ID as id,
 		                CONCAT(u.last_name, ", ", u.first_name)as name,
                         p.birthdate, p.gender, p.height, p.weight,
                         p.bp, p.bmi, p.other_info, p.contact_num, p.email
@@ -40,7 +40,9 @@ module.exports = (db) => {
                         WHERE
                             p.patient_id = ?
                         GROUP BY 
-                            p.presc_ID`
+                            p.presc_ID
+                        ORDER BY 
+                            p.date_created`
         const query2 =  `SELECT pi.presc_item_ID as id, g.name as genericName, b.name as brandName, m.name as manufacturer, pc.dosage, pi.amt_needed, pi.take_morning, pi.take_noon, pi.take_night
                         FROM TD_prescription_items pi
                         JOIN CMD_product_catalogue pc ON pi.product_ID = pc.product_ID
@@ -118,12 +120,37 @@ module.exports = (db) => {
 
     })
 
-    router.get('/postNewPatientByDoctor', (req, res) => {
-        
-    })
+    router.post('/postNewPrescription', (req, res) => {
+        const { doctor_id, patient_id, items } = req.body;
 
-    router.get('/postNewPrescription', (req, res) => {
-        
+        const prescriptionQuery = 'INSERT INTO TD_prescription (doctor_ID, patient_ID, date_created, isRead) VALUES (?, ?, CURDATE(), 0)'
+        const prescriptionItemQuery = 'INSERT INTO TD_prescription_items (presc_ID, product_ID, amt_needed, take_morning, take_noon, take_night) VALUES ?'
+
+        db.query(prescriptionQuery, [doctor_id, patient_id], (err, results) => {
+            if (err) {
+                console.error("Database insertion error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else {
+                const prescription_id = results.insertId
+                const values = items.map(item => [
+                    prescription_id,
+                    item.product_id,
+                    item.amt_needed,
+                    item.take_morning,
+                    item.take_noon,
+                    item.take_night
+                ]);
+
+                db.query(prescriptionItemQuery, [values], (err, results) => {
+                    if (err) {
+                        console.error("Database insertion error:", err);
+                        res.status(500).json({ error: "Internal Server Error" });
+                    } else {
+                        res.status(201).json({ message: "Success" });
+                    }
+                })
+            }
+        })
     })
 
     return router;
