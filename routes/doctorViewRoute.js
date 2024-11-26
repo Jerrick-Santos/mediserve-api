@@ -42,7 +42,7 @@ module.exports = (db) => {
                         GROUP BY 
                             p.presc_ID
                         ORDER BY 
-                            p.date_created`
+                            p.date_created DESC`
         const query2 =  `SELECT pi.presc_item_ID as id, g.name as genericName, b.name as brandName, m.name as manufacturer, pc.dosage, pi.amt_needed, pi.take_morning, pi.take_noon, pi.take_night
                         FROM TD_prescription_items pi
                         JOIN CMD_product_catalogue pc ON pi.product_ID = pc.product_ID
