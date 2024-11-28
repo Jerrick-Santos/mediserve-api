@@ -72,6 +72,88 @@ module.exports = (db) => {
         })
     })
 
+    router.patch('/editprofile/:id', (req, res) => {
+        const patientID = req.params.id;  // Access the patientID from the URL parameter
+        const {
+            first_name, last_name, height, weight, bmi, email,
+            address, gender, contact_num, birthdate, bp
+        } = req.body;
+    
+        // Step 1: Query to get the user_ID for the given patient_ID
+        const getUserIDQuery = `
+            SELECT user_ID FROM mobdeve_schema.MD_patient WHERE patient_ID = ?
+        `;
+    
+        // Query to update MD_user table
+        const updateUserQuery = `
+            UPDATE mobdeve_schema.MD_user
+            SET first_name = ?, last_name = ?
+            WHERE user_ID = ?
+        `;
+        
+        // Query to update MD_patient table
+        const updatePatientQuery = `
+            UPDATE mobdeve_schema.MD_patient
+            SET height = ?, weight = ?, bmi = ?, email = ?, address = ?, gender = ?, 
+                contact_num = ?, birthdate = ?, bp = ?
+            WHERE patient_ID = ?
+        `;
+    
+        // Step 1: Fetch user_ID based on patientID
+        db.query(getUserIDQuery, [patientID], (err, results) => {
+            if (err) {
+                console.error("Error fetching user_ID:", err);
+                return res.status(500).json({ error: "Error fetching user_ID" });
+            }
+    
+            // If no user found for the given patientID, return an error
+            if (results.length === 0) {
+                return res.status(404).json({ error: "Patient not found" });
+            }
+    
+            // Step 2: Extract user_ID
+            const userID = results[0].user_ID;
+    
+            // Step 3: Update MD_user table
+            db.query(updateUserQuery, [first_name, last_name, userID], (err, results) => {
+                if (err) {
+                    console.error("Error updating MD_user:", err);
+                    return res.status(500).json({ error: "Error updating MD_user" });
+                }
+    
+                // Step 4: Update MD_patient table
+                db.query(updatePatientQuery, [height, weight, bmi, email, address, gender, contact_num, birthdate, bp, patientID], (err, results) => {
+                    if (err) {
+                        console.error("Error updating MD_patient:", err);
+                        return res.status(500).json({ error: "Error updating MD_patient" });
+                    }
+    
+                    console.log("Profile updated successfully!");
+                    res.status(200).json({ message: "Profile updated successfully" });
+                });
+            });
+        });
+    });
+    
+    router.get('/pharmacies', (req, res) => {
+        const dbquery = `SELECT *
+                            FROM mobdeve_schema.MD_pharmacy
+        `;
+
+        db.query(dbquery, (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("Pharmacies Not Found.");
+                res.status(404).json({ message: "Pharmacies Not Found" });
+            } else {
+                res.status(200).json(results);
+            }
+        })
+    })
+    
+
     router.post('/reminders', (req, res) => {
         const { start_date, end_date, time, presc_item_id } = req.body;
 

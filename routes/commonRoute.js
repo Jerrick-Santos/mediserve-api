@@ -70,6 +70,30 @@ module.exports = (db) => {
                         pharmacy_ID: pharmacy_ID
                     });
                 });
+            } else if (user.type === "doctor") {
+                const doctortQuery = 'SELECT doctor_ID FROM MD_doctor WHERE user_ID = ?';
+                db.query(doctortQuery, [user.user_ID], (err, doctorResults) => {
+                    if (err) {
+                        console.error(err);
+                        return res.status(500).json({ message: 'Database error.' });
+                    }
+
+                    // Check if pharmacist data exists
+                    if (doctorResults.length === 0) {
+                        return res.status(404).json({ message: 'Doctor data not found.' });
+                    }
+
+                    const doctor_ID = doctorResults[0].doctor_ID;
+
+                    // Return success message with pharmacy_ID
+                    return res.status(200).json({
+                        message: 'Login successful',
+                        userId: user.user_ID,
+                        username: user.username,
+                        userType: user.type,
+                        doctor_ID: doctor_ID
+                    });
+                });
             } else {
                 // If user is not a pharmacist, return a success response without pharmacy_ID
                 return res.status(200).json({

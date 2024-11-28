@@ -5,7 +5,7 @@ module.exports = (db) => {
     
     router.get('/allpatientsByDoctor', (req, res) => {
         const { doctor_id } = req.query
-        const query =  `SELECT DISTINCT u.user_ID as id,
+        const query =  `SELECT DISTINCT p.patient_ID as id,
 		                CONCAT(u.last_name, ", ", u.first_name)as name,
                         p.birthdate, p.gender, p.height, p.weight,
                         p.bp, p.bmi, p.other_info, p.contact_num, p.email
@@ -40,8 +40,10 @@ module.exports = (db) => {
                         WHERE
                             p.patient_id = ?
                         GROUP BY 
-                            p.presc_ID`
-        const query2 =  `SELECT pi.presc_item_ID, g.name as genericName, b.name as brandName, m.name as manufacturer, pc.dosage, pi.amt_needed, pi.take_morning, pi.take_noon, pi.take_night
+                            p.presc_ID
+                        ORDER BY 
+                            p.date_created DESC`
+        const query2 =  `SELECT pi.presc_item_ID as id, g.name as genericName, b.name as brandName, m.name as manufacturer, pc.dosage, pi.amt_needed, pi.take_morning, pi.take_noon, pi.take_night
                         FROM TD_prescription_items pi
                         JOIN CMD_product_catalogue pc ON pi.product_ID = pc.product_ID
                         JOIN CMD_brand b ON pc.brand_ID = b.brand_ID
@@ -58,7 +60,7 @@ module.exports = (db) => {
                 console.error("Database query error:", err);
                 res.status(500).json({ error: "Internal Server Error" });
             } else if (results.length === 0) {
-                console.log("No patients found.");
+                console.log("No prescription found.");
                 res.status(404).json({ message: "No prescription found" });
             } else {
                 console.log(results)
@@ -94,12 +96,61 @@ module.exports = (db) => {
         })
     })
 
-    router.get('/postNewPatientByDoctor', (req, res) => {
-        
+    router.get('/getPatientDetails', (req, res) => {
+        const { patient_id } = req.query
+        const query = `SELECT DISTINCT p.patient_ID as id,
+		                CONCAT(u.last_name, ", ", u.first_name)as name,
+                        p.birthdate, p.gender, p.height, p.weight,
+                        p.bp, p.bmi, p.other_info, p.contact_num, p.email
+                        FROM MD_patient p
+                        JOIN MD_user u ON p.user_ID = u.user_ID
+                        LEFT JOIN TD_prescription pr ON pr.patient_ID = p.patient_ID
+                        WHERE p.patient_ID = ?`
+        db.query(query, patient_id, (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else if (results.length === 0) {
+                console.log("No patients found.");
+                res.status(404).json({ message: "No patient found" });
+            } else {
+                res.status(200).json({ message: "Patient fetched successfully", data: results });
+            }
+        })
+
     })
 
-    router.get('/postNewPrescription', (req, res) => {
-        
+    router.post('/postNewPrescription', (req, res) => {
+        const { doctor_id, patient_id, items } = req.body;
+
+        const prescriptionQuery = 'INSERT INTO TD_prescription (doctor_ID, patient_ID, date_created, isRead) VALUES (?, ?, CURDATE(), 0)'
+        const prescriptionItemQuery = 'INSERT INTO TD_prescription_items (presc_ID, product_ID, amt_needed, take_morning, take_noon, take_night) VALUES ?'
+
+        db.query(prescriptionQuery, [doctor_id, patient_id], (err, results) => {
+            if (err) {
+                console.error("Database insertion error:", err);
+                res.status(500).json({ error: "Internal Server Error" });
+            } else {
+                const prescription_id = results.insertId
+                const values = items.map(item => [
+                    prescription_id,
+                    item.product_id,
+                    item.amt_needed,
+                    item.take_morning,
+                    item.take_noon,
+                    item.take_night
+                ]);
+
+                db.query(prescriptionItemQuery, [values], (err, results) => {
+                    if (err) {
+                        console.error("Database insertion error:", err);
+                        res.status(500).json({ error: "Internal Server Error" });
+                    } else {
+                        res.status(201).json({ message: "Success" });
+                    }
+                })
+            }
+        })
     })
 
     return router;
