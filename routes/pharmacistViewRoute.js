@@ -54,11 +54,12 @@ module.exports = (db) => {
 
     router.get('/transactions', (req, res) => {
         const { pharmacyID } = req.query;
-        const dbquery = `SELECT CONCAT("TRANSAC", t1.transac_id) AS transac_id, t3.name AS product_name, t1.change_type, t1.qty
+        const dbquery = `SELECT DATE_FORMAT(t1.date, '%m-%d') AS transac_id, t3.name AS product_name, t1.change_type, t1.qty
         FROM mobdeve_schema.TD_stock_transactions t1
         JOIN mobdeve_schema.TD_stocks t2 ON t1.stock_ID = t2.stock_ID
         JOIN mobdeve_schema.CMD_brand t3 ON t3.brand_ID = t2.stock_ID
-        WHERE t2.pharmacy_ID = ?;`
+        WHERE t2.pharmacy_ID = ?
+        ORDER BY transac_id DESC;`
         db.query(dbquery, [pharmacyID], (err, results) => {
             if (err) {
                 console.error("Database query error:", err);
@@ -171,7 +172,7 @@ module.exports = (db) => {
                 res.status(500).json({ error: "Internal Server Error" });
             } else if (results.length === 0) {
                 console.log("Cart Not Found.");
-                res.status(404).json({ message: "Cart Not Found" });
+                res.status(200).json({ message: "Cart Not Found" });
             } else {
                 res.status(200).json(results);
             }
